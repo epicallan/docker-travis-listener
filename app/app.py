@@ -10,7 +10,7 @@ SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
 Session(app)
 # setting environment variable
-os.environ['TOKEN'] = 'TESTAPP'
+os.environ['TOKEN'] = 'TESTAPP'   # set this in .barshrc eg export TOKEN = 'TOKEN'
 # making bash file executable
 bash_file = 'app/deploy.sh'
 file_stats = os.stat(bash_file)
@@ -66,7 +66,7 @@ def docker_travis():
 def docker():
     args = request.args
     token = args.get('token')
-    print('req token: ' + token)
+    # print('req token: ' + token)
     if str(token) == str(os.environ.get('TOKEN')):
         subprocess.call(bash_file)
         return jsonify(success=True)
