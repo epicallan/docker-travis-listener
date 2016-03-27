@@ -1,9 +1,14 @@
 import os
 import subprocess
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
+from flask.ext.session import Session
 import stat
 
 app = Flask(__name__)
+# Session Configs
+SESSION_TYPE = 'filesystem'
+app.config.from_object(__name__)
+Session(app)
 # setting environment variable
 os.environ['TOKEN'] = 'TESTAPP'
 # making bash file executable
@@ -14,10 +19,22 @@ os.chmod(bash_file, file_stats.st_mode | stat.S_IEXEC)
 
 @app.route('/')
 def index():
+    # store session
     return 'Docker-Travis hook listener'
 
 
-@app.route('/ping', methods=['GET', 'POST'])
+@app.route('/set')
+def set():
+    session['key'] = 'value'
+    return 'ok'
+
+
+@app.route('/get')
+def get():
+    return session.get('key', 'not set')
+
+
+@app.route('/docker', methods=['GET', 'POST'])
 def pong():
     if request.method == 'POST':
         args = request.args
