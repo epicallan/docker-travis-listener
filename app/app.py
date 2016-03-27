@@ -16,14 +16,9 @@ bash_file = 'app/deploy.sh'
 file_stats = os.stat(bash_file)
 os.chmod(bash_file, file_stats.st_mode | stat.S_IEXEC)
 
-# initialise session variables
-session['docker'] = 0
-session['travis'] = 1   # for travis status 1 means failure
-
 
 def run_bash():
     # reset session variables
-    session['docker'] = 0
     session['travis'] = 1
     # run bash
     subprocess.call(bash_file)
@@ -47,21 +42,24 @@ def travis():
     # successful build has a status of 0
     session['travis'] = args.status
     # check if docker session is set
-    docker = session['docker']
-    if docker == 1 and session['travis'] == 0:
-        run_bash()
-    return jsonify(state())
+    return jsonify(success=True)
 
 
 @app.route('/docker-travis', methods=['POST'])
 def docker_travis():
     args = request.args
     token = args.get('token')
-    travis = session['travis']
-    # print('req token: ' + token)
-    if str(token) == str(os.environ.get('TOKEN')) and travis == 0:
-        run_bash()
-    return jsonify(state()), 500
+    if session.get('travis') is not None:
+        travis = session['travis']
+        print('travis : {0}'.format(travis))
+        if str(token) == str(os.environ.get('TOKEN')) and travis == 0:
+            run_bash()
+    else:
+        # TODO(try again and then send an email about this on failure again)
+        if str(token) == str(os.environ.get('TOKEN')):
+            print('travis-ci tests may not have passed')
+            run_bash()
+    return jsonify(success=True)
 
 
 @app.route('/docker', methods=['POST'])
