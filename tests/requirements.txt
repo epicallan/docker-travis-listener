@@ -1,0 +1,2 @@
+flask==0.1.0
+Flask-Session==0.2.3
