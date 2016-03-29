@@ -9,28 +9,33 @@ app = Flask(__name__)
 SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
 Session(app)
-# setting environment variable
-os.environ['TOKEN'] = 'TESTAPP'   # set this in .barshrc eg export TOKEN = 'TOKEN'
-# making bash file executable
-bash_file = 'app/deploy.sh'
-file_stats = os.stat(bash_file)
-os.chmod(bash_file, file_stats.st_mode | stat.S_IEXEC)
+
+# loading app configs
+app.config.from_object('config.DevelopmentConfig')
 
 
-def run_bash():
+def init():
+    bash = app.config['BASH']
+    # making bash file executables
+    for key, value in bash.items():
+        bash_file = value
+        # print('bash file {0}'.format(bash_file))
+        file_stats = os.stat(bash_file)
+        os.chmod(bash_file, file_stats.st_mode | stat.S_IEXEC)
+
+# initialise app
+init()
+
+
+def run_bash(bash_file):
     # reset session variables
     session['travis'] = 1
     # run bash
     subprocess.call(bash_file)
 
 
-def state():
-    return {'travis': session['travis'], 'docker': session['docker']}
-
-
 @app.route('/')
 def index():
-    # store session
     return 'Docker-Travis hook listener'
 
 
@@ -66,11 +71,13 @@ def docker_travis():
 def docker():
     args = request.args
     token = args.get('token')
-    # print('req token: ' + token)
-    if str(token) == str(os.environ.get('TOKEN')):
+    # check if we have token in our bash dictionary
+    bash_dictionary = app.config['BASH']
+    if str(token) in bash_dictionary:
+        bash_file = bash_dictionary[token]
         subprocess.call(bash_file)
         return jsonify(success=True)
     return jsonify(success=False), 500
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=app.config['PORT'], debug=app.config['DEBUG'])
