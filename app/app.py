@@ -39,7 +39,7 @@ def index():
     return 'Docker-Travis hook listener'
 
 
-@app.route('/travis', methods=['POST'])
+@app.route('/travis', methods=['POST'])  # travis webhook not returning a payload
 def travis():
     # set travis session
     args = request.args
@@ -50,7 +50,7 @@ def travis():
     return jsonify(success=True)
 
 
-@app.route('/docker-travis', methods=['POST'])
+@app.route('/docker-travis', methods=['POST'])  # travis webhook not returning a payload hence not usable
 def docker_travis():
     args = request.args
     token = args.get('token')
